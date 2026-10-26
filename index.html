@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriChef 3D - Trợ Lý Nấu Ăn & Dinh Dưỡng Thông Minh</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background-color: #ffffff;
+            color: #1e293b;
+            overflow-x: hidden;
+        }
+
+        /* Đồ họa 3D rau củ quả lơ lửng sinh động, bắt mắt hút người dùng */
+        .floating-vegetables {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .veg-3d {
+            position: absolute;
+            font-size: 3.5rem;
+            filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.15));
+            animation: float3D 8s ease-in-out infinite;
+            user-select: none;
+        }
+
+        @keyframes float3D {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg) scale(1);
+            }
+            50% {
+                transform: translateY(-35px) rotate(18deg) scale(1.12);
+            }
+        }
+
+        /* Phân bố vị trí 3D sinh động khắp màn hình */
+        .veg-1 { top: 12%; left: 3%; animation-duration: 9s; animation-delay: 0s; }
+        .veg-2 { top: 18%; right: 4%; animation-duration: 11s; animation-delay: 1.5s; }
+        .veg-3 { top: 40%; left: 1%; animation-duration: 10s; animation-delay: 0.8s; }
+        .veg-4 { top: 50%; right: 2%; animation-duration: 12s; animation-delay: 2s; }
+        .veg-5 { top: 75%; left: 4%; animation-duration: 9.5s; animation-delay: 1s; }
+        .veg-6 { top: 82%; right: 5%; animation-duration: 10.5s; animation-delay: 2.5s; }
+        .veg-7 { top: 28%; left: 10%; animation-duration: 8.5s; animation-delay: 0.3s; }
+        .veg-8 { top: 65%; right: 9%; animation-duration: 11.5s; animation-delay: 1.8s; }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08);
+            position: relative;
+            z-index: 10;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);
+        }
+    </style>
+</head>
+<body class="relative min-h-screen flex flex-col">
+
+    <!-- Đồ họa 3D rau củ lơ lửng sinh động -->
+    <div class="floating-vegetables">
+        <span class="veg-3d veg-1">🍅</span>
+        <span class="veg-3d veg-2">🥑</span>
+        <span class="veg-3d veg-3">🥦</span>
+        <span class="veg-3d veg-4">🥕</span>
+        <span class="veg-3d veg-5">🍋</span>
+        <span class="veg-3d veg-6">🍄</span>
+        <span class="veg-3d veg-7">🥬</span>
+        <span class="veg-3d veg-8">🧄</span>
+    </div>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('home')">
+                <div class="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/30 text-2xl font-bold">
+                    🥗
+                </div>
+                <div>
+                    <h1 class="text-2xl font-extrabold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">NutriChef 3D</h1>
+                    <p class="text-xs text-slate-400 font-medium">Nấu ngon - Sống khỏe - Giảm cân thông minh</p>
+                </div>
+            </div>
+
+            <nav class="hidden md:flex items-center space-x-1 bg-slate-100/80 p-1.5 rounded-2xl">
+                <button onclick="switchTab('home')" id="nav-home" class="tab-btn active px-5 py-2.5 rounded-xl text-sm font-semibold transition-all">Trang Chủ</button>
+                <button onclick="switchTab('lookup')" id="nav-lookup" class="tab-btn px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-all">Tra Cứu & Công Thức</button>
+                <button onclick="switchTab('fridge')" id="nav-fridge" class="tab-btn px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-all">Tủ Lạnh Thông Minh</button>
+                <button onclick="switchTab('calorie')" id="nav-calorie" class="tab-btn px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-all">Tính Calo & Thống Kê</button>
+                <button onclick="switchTab('mealplan')" id="nav-mealplan" class="tab-btn px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-all">Thực Đơn Giảm Cân</button>
+            </nav>
+
+            <div class="flex items-center space-x-3">
+                <div class="hidden sm:flex flex-col text-right">
+                    <span class="text-xs text-slate-400">Mục tiêu hôm nay</span>
+                    <span class="text-sm font-bold text-emerald-600" id="header-goal">1,200 / 1,500 kcal</span>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold border-2 border-emerald-400">
+                    D
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+
+        <!-- TAB 1: TRANG CHỦ -->
+        <section id="tab-home" class="space-y-10">
+            <!-- Hero Banner -->
+            <div class="relative rounded-3xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white p-8 sm:p-12 shadow-xl overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 text-9xl opacity-20">🥗</div>
+                <div class="relative z-10 max-w-2xl space-y-4">
+                    <span class="bg-white/20 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">Trợ Lý Dinh Dưỡng 3D</span>
+                    <h2 class="text-3xl sm:text-5xl font-extrabold leading-tight">Ăn Sạch, Sống Khỏe, Giảm Cân Khoa Học</h2>
+                    <p class="text-emerald-50 text-base sm:text-lg">Tra cứu dưỡng chất, tự chọn nguyên liệu tủ lạnh, theo dõi calo mỗi ngày và nhận thực đơn giảm cân chuẩn chuyên gia.</p>
+                    <div class="flex flex-wrap gap-4 pt-2">
+                        <button onclick="switchTab('lookup')" class="bg-white text-emerald-700 font-bold px-6 py-3.5 rounded-2xl shadow-lg hover:bg-emerald-50 transition-all flex items-center space-x-2">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <span>Tra Cứu Thực Phẩm Ngay</span>
+                        </button>
+                        <button onclick="switchTab('fridge')" class="bg-emerald-700/60 backdrop-blur-md text-white font-bold px-6 py-3.5 rounded-2xl border border-white/30 hover:bg-emerald-700 transition-all flex items-center space-x-2">
+                            <i class="fa-solid fa-kitchen-set"></i>
+                            <span>Tủ Lạnh Thông Minh</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tính năng nổi bật -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div onclick="switchTab('lookup')" class="glass-card p-6 rounded-3xl cursor-pointer hover:border-emerald-400 transition-all group">
+                    <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 text-2xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-carrot"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">Tra Cứu Dinh Dưỡng</h3>
+                    <p class="text-slate-500 text-sm">Biết rõ thành phần, thực phẩm kết hợp hoàn hảo và món ăn phù hợp.</p>
+                </div>
+                <div onclick="switchTab('fridge')" class="glass-card p-6 rounded-3xl cursor-pointer hover:border-emerald-400 transition-all group">
+                    <div class="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center text-teal-600 text-2xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-kitchen-set"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">Tủ Lạnh Thông Minh</h3>
+                    <p class="text-slate-500 text-sm">Tự chọn nguyên liệu thừa hoặc nhận gợi ý món nấu ngay lập tức.</p>
+                </div>
+                <div onclick="switchTab('calorie')" class="glass-card p-6 rounded-3xl cursor-pointer hover:border-emerald-400 transition-all group">
+                    <div class="w-14 h-14 bg-cyan-100 rounded-2xl flex items-center justify-center text-cyan-600 text-2xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">Thống Kê Calo</h3>
+                    <p class="text-slate-500 text-sm">Theo dõi lượng calo tiêu thụ chi tiết theo Ngày, Tuần, Tháng.</p>
+                </div>
+                <div onclick="switchTab('mealplan')" class="glass-card p-6 rounded-3xl cursor-pointer hover:border-emerald-400 transition-all group">
+                    <div class="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 text-2xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-calendar-days"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">Thực Đơn Giảm Cân</h3>
+                    <p class="text-slate-500 text-sm">Thực đơn khoa học trong ngày, tuần và tháng giúp giảm cân an toàn.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: TRA CỨU & CÔNG THỨC -->
+        <section id="tab-lookup" class="space-y-6 hidden">
+            <div class="glass-card p-6 sm:p-8 rounded-3xl">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Tra Cứu Thực Phẩm & Công Thức</h2>
+                        <p class="text-slate-500 text-sm">Nhập tên thực phẩm để xem chất dinh dưỡng, món hợp nấu và công thức.</p>
+                    </div>
+                    <div class="relative w-full md:w-80">
+                        <input type="text" id="food-search-input" oninput="searchFood()" placeholder="VD: Ức gà, Bông cải xanh, Khoai lang..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 pl-11 text-sm focus:outline-none focus:border-emerald-500">
+                        <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-slate-400"></i>
+                    </div>
+                </div>
+
+                <!-- Gợi ý nhanh -->
+                <div class="flex flex-wrap gap-2 mb-8">
+                    <span class="text-xs text-slate-400 self-center mr-2">Gợi ý nhanh:</span>
+                    <button onclick="selectFoodQuery('Ức gà')" class="bg-slate-100 hover:bg-emerald-50 hover:text-emerald-600 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all">🍗 Ức gà</button>
+                    <button onclick="selectFoodQuery('Bông cải xanh')" class="bg-slate-100 hover:bg-emerald-50 hover:text-emerald-600 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all">🥦 Bông cải xanh</button>
+                    <button onclick="selectFoodQuery('Khoai lang')" class="bg-slate-100 hover:bg-emerald-50 hover:text-emerald-600 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all">🍠 Khoai lang</button>
+                    <button onclick="selectFoodQuery('Cá hồi')" class="bg-slate-100 hover:bg-emerald-50 hover:text-emerald-600 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all">🐟 Cá hồi</button>
+                    <button onclick="selectFoodQuery('Quả bơ')" class="bg-slate-100 hover:bg-emerald-50 hover:text-emerald-600 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all">🥑 Quả bơ</button>
+                </div>
+
+                <!-- Kết quả -->
+                <div id="food-result-container" class="grid grid-cols-1 lg:grid-cols-3 gap-6"></div>
+            </div>
+        </section>
+
+        <!-- TAB 3: TỦ LẠNH THÔNG MINH -->
+        <section id="tab-fridge" class="space-y-6 hidden">
+            <div class="glass-card p-6 sm:p-8 rounded-3xl">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Tủ Lạnh Thông Minh (Tự Chọn & Gợi Ý)</h2>
+                        <p class="text-slate-500 text-sm">Tích chọn các nguyên liệu còn sót lại trong tủ lạnh để tìm món nấu ngay lập tức.</p>
+                    </div>
+                    <button onclick="matchFridgeRecipes()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-2xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Gợi Ý Món Từ Nguyên Liệu Đã Chọn</span>
+                    </button>
+                </div>
+
+                <!-- Bảng chọn nguyên liệu thủ công -->
+                <div class="mb-8">
+                    <h3 class="text-sm font-bold text-slate-700 mb-3">1. Tích chọn thực phẩm còn sót lại trong tủ lạnh:</h3>
+                    <div id="fridge-checkboxes" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3"></div>
+                </div>
+
+                <!-- Kết quả món ăn -->
+                <div>
+                    <h3 class="text-sm font-bold text-slate-700 mb-3">2. Món ăn phù hợp có thể nấu ngay:</h3>
+                    <div id="fridge-recipe-results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: TÍNH CALO & THỐNG KÊ -->
+        <section id="tab-calorie" class="space-y-6 hidden">
+            <div class="glass-card p-6 sm:p-8 rounded-3xl">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Tính Calo & Thống Kê</h2>
+                        <p class="text-slate-500 text-sm">Quản lý năng lượng nạp vào theo Ngày, Tuần, Tháng.</p>
+                    </div>
+                    <div class="flex bg-slate-100 p-1.5 rounded-2xl space-x-1">
+                        <button onclick="switchCalPeriod('day')" id="cal-day-btn" class="px-4 py-2 rounded-xl text-xs font-semibold bg-white text-emerald-600 shadow-sm transition-all">Hôm Nay</button>
+                        <button onclick="switchCalPeriod('week')" id="cal-week-btn" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 transition-all">Tuần Này</button>
+                        <button onclick="switchCalPeriod('month')" id="cal-month-btn" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 transition-all">Tháng Này</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-emerald-50 border border-emerald-100 p-6 rounded-2xl">
+                        <span class="text-xs font-bold text-emerald-600 uppercase">Đã Nạp (Calo)</span>
+                        <h3 class="text-3xl font-extrabold text-emerald-700 mt-2" id="stat-consumed">1,200 kcal</h3>
+                        <p class="text-xs text-slate-500 mt-1">Mục tiêu: <span id="stat-target">1,500 kcal</span></p>
+                    </div>
+                    <div class="bg-teal-50 border border-teal-100 p-6 rounded-2xl">
+                        <span class="text-xs font-bold text-teal-600 uppercase">Còn Lại Được Phép Ăn</span>
+                        <h3 class="text-3xl font-extrabold text-teal-700 mt-2" id="stat-remaining">300 kcal</h3>
+                        <p class="text-xs text-slate-500 mt-1">Giúp thâm hụt calo giảm cân</p>
+                    </div>
+                    <div class="bg-cyan-50 border border-cyan-100 p-6 rounded-2xl">
+                        <span class="text-xs font-bold text-cyan-600 uppercase">Đánh Giá Tiến Độ</span>
+                        <h3 class="text-xl font-extrabold text-cyan-700 mt-2" id="stat-status">Đang tiến triển tốt!</h3>
+                        <p class="text-xs text-slate-500 mt-1">Duy trì mức ăn uống khoa học</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                    <h3 class="text-sm font-bold text-slate-700 mb-4">Thêm món ăn đã tiêu thụ vào nhật ký:</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <select id="log-meal-select" class="bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-emerald-500">
+                            <option value="Ức gà áp chảo sốt chanh leo (320 kcal)">Ức gà áp chảo sốt chanh leo (320 kcal)</option>
+                            <option value="Salad cá hồi bơ tươi (380 kcal)">Salad cá hồi bơ tươi (380 kcal)</option>
+                            <option value="Canh rong biển đậu hũ (150 kcal)">Canh rong biển đậu hũ (150 kcal)</option>
+                            <option value="Khoai lang luộc & Trứng luộc (250 kcal)">Khoai lang luộc & Trứng luộc (250 kcal)</option>
+                        </select>
+                        <select id="log-time-select" class="bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-emerald-500">
+                            <option value="Bữa Sáng">Bữa Sáng</option>
+                            <option value="Bữa Trưa" selected>Bữa Trưa</option>
+                            <option value="Bữa Tối">Bữa Tối</option>
+                            <option value="Bữa Phụ">Bữa Phụ</option>
+                        </select>
+                        <button onclick="addMealToLog()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-md">
+                            + Thêm Món Ăn
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <h3 class="text-sm font-bold text-slate-700 mb-3">Nhật ký món ăn đã ghi nhận:</h3>
+                    <div id="meal-log-list" class="space-y-3"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: THỰC ĐƠN GIẢM CÂN -->
+        <section id="tab-mealplan" class="space-y-6 hidden">
+            <div class="glass-card p-6 sm:p-8 rounded-3xl">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Thực Đơn Giảm Cân Khoa Học</h2>
+                        <p class="text-slate-500 text-sm">Thực đơn chi tiết cho Ngày, Tuần và Tháng theo chuẩn thâm hụt calo.</p>
+                    </div>
+                    <div class="flex bg-slate-100 p-1.5 rounded-2xl space-x-1">
+                        <button onclick="switchPlanTab('day')" id="plan-day-btn" class="px-4 py-2 rounded-xl text-xs font-semibold bg-white text-emerald-600 shadow-sm transition-all">Trong Ngày</button>
+                        <button onclick="switchPlanTab('week')" id="plan-week-btn" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 transition-all">Trong Tuần</button>
+                        <button onclick="switchPlanTab('month')" id="plan-month-btn" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 transition-all">Trong Tháng</button>
+                    </div>
+                </div>
+
+                <div id="mealplan-content" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-100 py-6 mt-12 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400">
+            <p>&copy; 2026 NutriChef 3D - Trợ Lý Nấu Ăn & Dinh Dưỡng Thông Minh. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Xử Lý -->
+    <script>
+        const foodDatabase = [
+            {
+                name: "Ức gà",
+                icon: "🍗",
+                calories: "165 kcal / 100g",
+                nutrients: "Protein cao (31g), ít béo, giàu Vitamin B6, Niacin, Selen.",
+                pairWith: "Bông cải xanh, khoai lang, nấm đông cô, tiêu đen, chanh leo.",
+                bestDishes: ["Ức gà áp chảo sốt chanh leo", "Ức gà luộc xé phay trộn salad", "Ức gà nướng mật ong rau củ"],
+                recipe: "1. Ướp ức gà với chút muối tiêu, tỏi băm và mật ong.\n2. Áp chảo lửa vừa mỗi mặt 4-5 phút cho vàng đều.\n3. Thêm sốt chanh leo cô đặc đun sánh lại rồi tắt bếp."
+            },
+            {
+                name: "Bông cải xanh",
+                icon: "🥦",
+                calories: "34 kcal / 100g",
+                nutrients: "Giàu Vitamin C, K, chất xơ, Folate và chất chống oxy hóa chống lão hóa.",
+                pairWith: "Ức gà, tôm tươi, tỏi phi, dầu ô liu.",
+                bestDishes: ["Bông cải xanh xào tỏi", "Salad bông cải xanh ức gà", "Bông cải xanh luộc chấm mè rang"],
+                recipe: "1. Cắt bông cải thành miếng vừa ăn, ngâm nước muối loãng 10 phút.\n2. Chần sơ qua nước sôi có chút muối để giữ màu xanh giòn.\n3. Xào nhanh với tỏi phi hoặc dùng làm salad."
+            },
+            {
+                name: "Khoai lang",
+                icon: "🍠",
+                calories: "86 kcal / 100g",
+                nutrients: "Tinh bột hấp thu chậm (Low GI), giàu Beta-carotene, Kali, Vitamin A và chất xơ.",
+                pairWith: "Trứng luộc, ức gà, sữa chua Hy Lạp.",
+                bestDishes: ["Khoai lang luộc giảm cân", "Khoai lang nướng mật ong", "Súp khoai lang ức gà"],
+                recipe: "1. Rửa sạch khoai lang, giữ nguyên vỏ để giữ dưỡng chất.\n2. Hấp cách thủy khoảng 20-25 phút cho đến khi chín bùi.\n3. Ăn kèm trứng luộc cho bữa sáng hoặc bữa trưa eat clean."
+            },
+            {
+                name: "Cá hồi",
+                icon: "🐟",
+                calories: "206 kcal / 100g",
+                nutrients: "Giàu Omega-3 tốt cho tim mạch và não bộ, Protein chất lượng cao, Vitamin D.",
+                pairWith: "Măng tây, chanh vàng, bơ tươi, tiêu đen.",
+                bestDishes: ["Cá hồi áp chảo sốt bơ chanh", "Salad cá hồi bơ tươi", "Cá hồi nướng giấy bạc rau củ"],
+                recipe: "1. Thấm khô phi lê cá hồi, ướp chút muối hồng và tiêu.\n2. Áp chảo mặt da trước cho giòn, sau đó lật mặt lại khoảng 2 phút.\n3. Vắt thêm chanh vàng và thưởng thức."
+            },
+            {
+                name: "Quả bơ",
+                icon: "🥑",
+                calories: "160 kcal / 100g",
+                nutrients: "Chất béo lành mạnh (Monounsaturated fat), Kali, Vitamin E, chất xơ cao.",
+                pairWith: "Trứng ốp la, bánh mì đen, ức gà, tôm.",
+                bestDishes: ["Salad bơ trứng ức gà", "Bánh mì đen bơ nghiền trứng", "Sinh tố bơ sữa chua Hy Lạp"],
+                recipe: "1. Cắt đôi quả bơ, bỏ hạt và nạo phần thịt.\n2. Nghiền nhuyễn bơ với chút muối tiêu hoặc cắt lát.\n3. Ăn kèm bánh mì nguyên cám và trứng luộc."
+            }
+        ];
+
+        const fridgeItemsList = ["Ức gà", "Bông cải xanh", "Khoai lang", "Cá hồi", "Quả bơ", "Trứng", "Cà chua", "Nấm", "Hành tây", "Tôm", "Đậu hũ", "Rong biển"];
+        let selectedFridgeItems = ["Ức gà", "Bông cải xanh"];
+        let mealLog = [
+            { time: "Bữa Sáng", name: "Khoai lang luộc & Trứng luộc", calories: 250 },
+            { time: "Bữa Trưa", name: "Ức gà áp chảo sốt chanh leo", calories: 320 }
+        ];
+
+        function switchTab(tabId) {
+            ['home', 'lookup', 'fridge', 'calorie', 'mealplan'].forEach(id => {
+                document.getElementById(`tab-${id}`).classList.add('hidden');
+                const btn = document.getElementById(`nav-${id}`);
+                if(btn) btn.classList.remove('active');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if(activeBtn) activeBtn.classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function searchFood() {
+            const keyword = document.getElementById('food-search-input').value.toLowerCase().trim();
+            const container = document.getElementById('food-result-container');
+            const filtered = foodDatabase.filter(f => f.name.toLowerCase().includes(keyword));
+            
+            if(filtered.length === 0) {
+                container.innerHTML = `<div class="col-span-3 text-center py-10 text-slate-400">Không tìm thấy thực phẩm phù hợp. Hãy thử: Ức gà, Bông cải xanh, Khoai lang...</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(item => `
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center space-x-3 mb-3">
+                            <span class="text-3xl">${item.icon}</span>
+                            <div>
+                                <h4 class="text-lg font-bold text-slate-800">${item.name}</h4>
+                                <span class="text-xs font-semibold text-emerald-600 bg-emerald-100 px-2.5 py-1 rounded-full">${item.calories}</span>
+                            </div>
+                        </div>
+                        <div class="space-y-2 text-sm text-slate-600">
+                            <p><strong>Dinh dưỡng:</strong> ${item.nutrients}</p>
+                            <p><strong>Hợp nấu với:</strong> ${item.pairWith}</p>
+                            <p><strong>Món phù hợp:</strong> ${item.bestDishes.join(', ')}</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200">
+                        <span class="text-xs font-bold text-slate-400 uppercase">Công thức chế biến:</span>
+                        <p class="text-xs text-slate-600 mt-1 whitespace-pre-line">${item.recipe}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectFoodQuery(name) {
+            document.getElementById('food-search-input').value = name;
+            searchFood();
+            switchTab('lookup');
+        }
+
+        function renderFridgeCheckboxes() {
+            const container = document.getElementById('fridge-checkboxes');
+            container.innerHTML = fridgeItemsList.map(item => {
+                const isSelected = selectedFridgeItems.includes(item);
+                return `
+                    <label class="flex items-center space-x-2 p-3 rounded-xl border cursor-pointer transition-all ${isSelected ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-slate-200 hover:border-emerald-200'}">
+                        <input type="checkbox" value="${item}" ${isSelected ? 'checked' : ''} onchange="toggleFridgeItem('${item}')" class="rounded text-emerald-600 focus:ring-emerald-500">
+                        <span class="text-xs font-semibold text-slate-700">${item}</span>
+                    </label>
+                `;
+            }).join('');
+            matchFridgeRecipes();
+        }
+
+        function toggleFridgeItem(item) {
+            if(selectedFridgeItems.includes(item)) {
+                selectedFridgeItems = selectedFridgeItems.filter(i => i !== item);
+            } else {
+                selectedFridgeItems.push(item);
+            }
+            renderFridgeCheckboxes();
+        }
+
+        function matchFridgeRecipes() {
+            const container = document.getElementById('fridge-recipe-results');
+            const matched = foodDatabase.filter(food => 
+                selectedFridgeItems.some(item => food.name.toLowerCase().includes(item.toLowerCase()) || food.pairWith.toLowerCase().includes(item.toLowerCase()))
+            );
+
+            if(matched.length === 0) {
+                container.innerHTML = `<div class="col-span-3 text-center py-10 text-slate-400">Chưa chọn đủ nguyên liệu hoặc không tìm thấy món phù hợp. Hãy chọn thêm nguyên liệu trong tủ lạnh nhé!</div>`;
+                return;
+            }
+
+            container.innerHTML = matched.map(item => `
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl">${item.icon}</span>
+                        <div>
+                            <h4 class="text-base font-bold text-slate-800">${item.bestDishes[0]}</h4>
+                            <span class="text-xs text-emerald-600 font-medium">Nguyên liệu: ${item.name}</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-600"><strong>Công thức nhanh:</strong> ${item.recipe}</p>
+                    <button onclick="addFromRecipe('${item.bestDishes[0]}')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 rounded-xl transition-all">
+                        + Thêm vào nhật ký calo
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function addFromRecipe(dishName) {
+            mealLog.push({ time: "Bữa Phụ", name: dishName, calories: 280 });
+            renderMealLog();
+            alert(`Đã thêm "${dishName}" vào nhật ký calo hôm nay!`);
+        }
+
+        function renderMealLog() {
+            const listContainer = document.getElementById('meal-log-list');
+            const totalCal = mealLog.reduce((sum, m) => sum + m.calories, 0);
+            const targetCal = 1500;
+            const remaining = targetCal - totalCal;
+
+            document.getElementById('stat-consumed').innerText = `${totalCal} kcal`;
+            document.getElementById('stat-remaining').innerText = `${remaining > 0 ? remaining : 0} kcal`;
+            document.getElementById('header-goal').innerText = `${totalCal} / ${targetCal} kcal`;
+
+            if(listContainer) {
+                if(mealLog.length === 0) {
+                    listContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Chưa có món ăn nào được ghi nhận hôm nay.</p>`;
+                    return;
+                }
+                listContainer.innerHTML = mealLog.map((m, index) => `
+                    <div class="flex items-center justify-between bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl">
+                        <div class="flex items-center space-x-3">
+                            <span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-lg">${m.time}</span>
+                            <span class="text-sm font-semibold text-slate-800">${m.name}</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm font-bold text-emerald-600">${m.calories} kcal</span>
+                            <button onclick="removeMealLog(${index})" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function addMealToLog() {
+            const select = document.getElementById('log-meal-select').value;
+            const time = document.getElementById('log-time-select').value;
+            const calMatch = select.match(/\((\d+) kcal\)/);
+            const cal = calMatch ? parseInt(calMatch[1]) : 300;
+
+            mealLog.push({ time, name: select.split(' (')[0], calories: cal });
+            renderMealLog();
+        }
+
+        function removeMealLog(index) {
+            mealLog.splice(index, 1);
+            renderMealLog();
+        }
+
+        function switchCalPeriod(period) {
+            ['day', 'week', 'month'].forEach(p => {
+                const btn = document.getElementById(`cal-${p}-btn`);
+                if(btn) {
+                    btn.classList.remove('bg-white', 'text-emerald-600', 'shadow-sm');
+                    btn.classList.add('text-slate-600');
+                }
+            });
+            const active = document.getElementById(`cal-${period}-btn`);
+            if(active) {
+                active.classList.add('bg-white', 'text-emerald-600', 'shadow-sm');
+                active.classList.remove('text-slate-600');
+            }
+
+            if(period === 'week') {
+                document.getElementById('stat-consumed').innerText = "9,450 kcal";
+                document.getElementById('stat-target').innerText = "10,500 kcal";
+                document.getElementById('stat-remaining').innerText = "1,050 kcal";
+            } else if(period === 'month') {
+                document.getElementById('stat-consumed').innerText = "40,500 kcal";
+                document.getElementById('stat-target').innerText = "45,000 kcal";
+                document.getElementById('stat-remaining').innerText = "4,500 kcal";
+            } else {
+                renderMealLog();
+            }
+        }
+
+        function switchPlanTab(type) {
+            ['day', 'week', 'month'].forEach(t => {
+                const btn = document.getElementById(`plan-${t}-btn`);
+                if(btn) {
+                    btn.classList.remove('bg-white', 'text-emerald-600', 'shadow-sm');
+                    btn.classList.add('text-slate-600');
+                }
+            });
+            const active = document.getElementById(`plan-${type}-btn`);
+            if(active) {
+                active.classList.add('bg-white', 'text-emerald-600', 'shadow-sm');
+                active.classList.remove('text-slate-600');
+            }
+
+            const container = document.getElementById('mealplan-content');
+            if(type === 'day') {
+                container.innerHTML = `
+                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-3">
+                        <span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">Bữa Sáng (300 kcal)</span>
+                        <h4 class="text-base font-bold text-slate-800">Khoai lang luộc & Trứng luộc</h4>
+                        <p class="text-xs text-slate-600">1 củ khoai lang cỡ trung + 2 quả trứng gà luộc + 1 ly trà xanh không đường.</p>
+                    </div>
+                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-3">
+                        <span class="bg-teal-100 text-teal-700 text-xs font-bold px-3 py-1 rounded-full">Bữa Trưa (450 kcal)</span>
+                        <h4 class="text-base font-bold text-slate-800">Ức gà áp chảo & Bông cải xanh</h4>
+                        <p class="text-xs text-slate-600">150g ức gà áp chảo sốt chanh leo + 1 chén cơm gạo lứt + bông cải xanh luộc.</p>
+                    </div>
+                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-3">
+                        <span class="bg-cyan-100 text-cyan-700 text-xs font-bold px-3 py-1 rounded-full">Bữa Tối (350 kcal)</span>
+                        <h4 class="text-base font-bold text-slate-800">Salad cá hồi bơ tươi</h4>
+                        <p class="text-xs text-slate-600">100g cá hồi áp chảo + 1/2 quả bơ + xà lách, cà chua bi trộn dầu giấm ô liu.</p>
+                    </div>
+                `;
+            } else if(type === 'week') {
+                container.innerHTML = `
+                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-3">
+                        <span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">Thứ 2 - Thứ 4</span>
+                        <h4 class="text-base font-bold text-slate-800">Giai đoạn kích hoạt trao đổi chất</h4>
+                        <p class="text-xs text-slate-600">Tập trung tinh bột hấp thu chậm (khoai lang, yến mạch) kết hợp ức gà và rau xanh đậm.</p>
+                    </div>
+                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-3">
+                        <span class="bg-teal-100 text-teal-700 text-xs font-bold px-3 py-1 rounded-full">Thứ 5 - Thứ 6</span>
+                        <h4 class="text-base font-bold text-slate-800">Giai đoạn đốt mỡ chuyên sâu</h4>
+                        <p class="text-xs text-slate-600">Bổ sung chất béo tốt từ cá hồi, quả bơ, hạn chế tối đa đường và tinh bột tinh chế.</p>
+                    </div>
+                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-3">
+                        <span class="bg-cyan-100 text-cyan-700 text-xs font-bold px-3 py-1 rounded-full">Thứ 7 & Chủ Nhật</span>
+                        <h4 class="text-base font-bold text-slate-800">Cân bằng & Xả cơ</h4>
+                        <p class="text-xs text-slate-600">Thực đơn linh hoạt với hải sản, canh rong biển và các món soup thanh đạm.</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-3 md:col-span-3">
+                        <span class="bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full">Lộ Trình Giảm Cân 30 Ngày Chuẩn Khoa Học</span>
+                        <h4 class="text-lg font-bold text-slate-800">Mục tiêu giảm 2 - 4kg an toàn không mệt mỏi</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                            <div class="bg-white p-4 rounded-xl border border-slate-200">
+                                <strong class="text-emerald-600 text-sm">Tuần 1: Thanh lọc cơ thể</strong>
+                                <p class="text-xs text-slate-500 mt-1">Làm quen với chế độ thâm hụt 400-500 kcal/ngày, uống đủ 2L nước.</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-slate-200">
+                                <strong class="text-teal-600 text-sm">Tuần 2 & 3: Đốt mỡ tầng sâu</strong>
+                                <p class="text-xs text-slate-500 mt-1">Kết hợp nguyên liệu tủ lạnh thông minh, tăng cường protein và chất xơ.</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-slate-200">
+                                <strong class="text-cyan-600 text-sm">Tuần 4: Duy trì vóc dáng</strong>
+                                <p class="text-xs text-slate-500 mt-1">Ổn định chuyển hóa, hình thành thói quen ăn uống lành mạnh lâu dài.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        window.onload = function() {
+            searchFood();
+            renderFridgeCheckboxes();
+            renderMealLog();
+            switchPlanTab('day');
+        };
+    </script>
+</body>
+</html>
